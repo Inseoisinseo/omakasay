@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const prompt = `다음 한국어 문장을 ${style}로 번역해줘. 번역된 문장만 출력하고, 설명이나 부가 내용은 절대 포함하지 마.\n\n${text.trim()}`;
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
