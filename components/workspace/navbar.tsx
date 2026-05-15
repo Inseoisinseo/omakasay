@@ -12,11 +12,11 @@ export const LANGUAGES = [
 export type Language = typeof LANGUAGES[0];
 
 const glassStyle: React.CSSProperties = {
-  background: 'rgba(255, 255, 255, 0.06)',
+  background: 'rgba(255, 255, 255, 0.7)',
   backdropFilter: 'blur(20px) saturate(180%)',
   WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-  border: '1px solid rgba(255, 255, 255, 0.12)',
-  boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
+  border: '1px solid rgba(0, 0, 0, 0.10)',
+  boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
 };
 
 interface WorkspaceNavbarProps {
@@ -46,7 +46,7 @@ export function WorkspaceNavbar({ selected, onSelect }: WorkspaceNavbarProps) {
   return (
     <nav className="flex items-center justify-between px-6 py-3 relative">
       {/* Logo */}
-      <span className="text-xl font-bold tracking-wider text-white font-[family-name:var(--font-pacifico)] shrink-0 z-10">
+      <span className="text-xl font-bold tracking-wider text-gray-900 font-[family-name:var(--font-pacifico)] shrink-0 z-10">
         omakasay
       </span>
 
@@ -57,8 +57,8 @@ export function WorkspaceNavbar({ selected, onSelect }: WorkspaceNavbarProps) {
           style={glassStyle}
           onClick={() => setOpen((v) => !v)}
         >
-          <Search size={14} className="text-white/40 shrink-0" />
-          <span className={`text-sm w-56 font-[family-name:var(--font-dm-mono)] select-none ${selected ? 'text-white/80' : 'text-white/30'}`}>
+          <Search size={14} className="text-gray-400 shrink-0" />
+          <span className={`text-sm w-56 font-[family-name:var(--font-dm-mono)] select-none ${selected ? 'text-gray-800' : 'text-gray-400'}`}>
             {selected ? `${selected.native} · ${selected.label}` : 'Select language...'}
           </span>
         </div>
@@ -67,16 +67,16 @@ export function WorkspaceNavbar({ selected, onSelect }: WorkspaceNavbarProps) {
         {open && (
           <div
             className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-64 rounded-2xl overflow-hidden py-1"
-            style={{ ...glassStyle, background: 'rgba(30, 30, 30, 0.7)' }}
+            style={{ ...glassStyle, background: 'rgba(255, 255, 255, 0.95)' }}
           >
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => handleSelect(lang)}
-                className="w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-white/10"
+                className="w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-black/5"
               >
-                <span className="text-sm text-white/80 font-[family-name:var(--font-dm-mono)]">{lang.label}</span>
-                <span className="text-sm text-white/40 font-[family-name:var(--font-dm-mono)]">{lang.native}</span>
+                <span className="text-sm text-gray-800 font-[family-name:var(--font-dm-mono)]">{lang.label}</span>
+                <span className="text-sm text-gray-400 font-[family-name:var(--font-dm-mono)]">{lang.native}</span>
               </button>
             ))}
           </div>
