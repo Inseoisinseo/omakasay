@@ -7,6 +7,16 @@ import { PHRASES } from '@/components/workspace/phrases';
 import { ArrowUp, Square, Mic, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const CATEGORY_SHORT: Record<string, string> = {
+  greeting:      '인사',
+  hotel:         '숙소',
+  restaurant:    '식당',
+  transport:     '교통',
+  shopping:      '쇼핑',
+  emergency:     '긴급',
+  communication: '소통',
+};
+
 const BLOCK_COLORS = [
   { bg: 'rgba(99, 102, 241, 0.10)',  border: 'rgba(99, 102, 241, 0.30)'  },
   { bg: 'rgba(168, 85, 247, 0.10)',  border: 'rgba(168, 85, 247, 0.30)'  },
@@ -154,7 +164,7 @@ export default function WorkspacePage() {
                       : 'bg-transparent text-gray-400 border border-black/10 hover:text-gray-700 hover:border-black/20',
                   )}
                 >
-                  {cat.emoji} {cat.name}
+                  {cat.emoji} {CATEGORY_SHORT[cat.id] ?? cat.name}
                 </button>
               ))}
             </div>
@@ -173,18 +183,25 @@ export default function WorkspacePage() {
               <div className="grid grid-cols-2 gap-3">
                 {category.phrases.map((phrase, i) => {
                   const color = BLOCK_COLORS[i % BLOCK_COLORS.length];
+                  const koreanSize =
+                    phrase.korean.length <= 10 ? 'text-[15px]'
+                    : phrase.korean.length <= 12 ? 'text-[13px]'
+                    : 'text-[11px]';
                   return (
                     <button
                       key={phrase.id}
                       onClick={() => handleCardClick(phrase.native)}
-                      className="flex flex-col gap-1.5 px-4 py-3.5 rounded-xl text-left transition-all cursor-pointer hover:brightness-95 active:scale-[0.97]"
+                      className="flex flex-col gap-1 px-4 py-3.5 rounded-xl text-left transition-all cursor-pointer hover:brightness-95 active:scale-[0.97]"
                       style={{ background: color.bg, border: `1px solid ${color.border}` }}
                     >
-                      <span className="text-lg font-medium text-gray-900 font-[family-name:var(--font-noto-sans-kr)]">
+                      <span className={`${koreanSize} font-medium text-gray-900 font-[family-name:var(--font-noto-sans-kr)] leading-snug whitespace-nowrap`}>
                         {phrase.korean}
                       </span>
-                      <span className="text-xs text-gray-500 font-[family-name:var(--font-dm-mono)]">
-                        {phrase.native} · {phrase.pronunciation}
+                      <span className="text-[11px] text-gray-500 font-[family-name:var(--font-dm-mono)] leading-snug break-all">
+                        {phrase.native}
+                      </span>
+                      <span className="text-[11px] text-gray-400 font-[family-name:var(--font-noto-sans-kr)] leading-snug">
+                        {phrase.pronunciation}
                       </span>
                     </button>
                   );
