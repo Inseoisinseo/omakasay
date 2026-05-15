@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, DM_Mono, Pacifico } from "next/font/google";
+import { Geist, Geist_Mono, DM_Mono, Pacifico, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,6 +24,13 @@ const pacifico = Pacifico({
   weight: "400",
 });
 
+const notoSansKR = Noto_Sans_KR({
+  variable: "--font-noto-sans-kr",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "omakasay",
   description: "omakasay",
@@ -37,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${dmMono.variable} ${pacifico.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${dmMono.variable} ${pacifico.variable} ${notoSansKR.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
