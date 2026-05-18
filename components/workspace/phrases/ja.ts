@@ -26,6 +26,7 @@ const ja: Category[] = [
       { id: 'h3', korean: '방 열쇠를 잃어버렸어요',      native: '部屋の鍵をなくしました',       pronunciation: '헤야노 카기오 나쿠시마시타',      category: 'hotel' },
       { id: 'h4', korean: '와이파이 비밀번호가 뭔가요?', native: 'WiFiのパスワードは何ですか？', pronunciation: '와이파이노 파스와도와 난데스카',  category: 'hotel' },
       { id: 'h5', korean: '수건을 더 주세요',            native: 'タオルをもっとください',       pronunciation: '타오루오 못토 쿠다사이',           category: 'hotel' },
+      { id: 'h6', korean: '짐을 맡아주실 수 있나요?',   native: '荷物を預けてもいいですか？',   pronunciation: '니모쯔오 아즈케떼모 이이데스카',   category: 'hotel' },
     ],
   },
   {
@@ -70,6 +71,7 @@ const ja: Category[] = [
       { id: 's4', korean: '다른 색상 있나요?',        native: '他の色はありますか？',    pronunciation: '호카노 이로와 아리마스카', category: 'shopping' },
       { id: 's5', korean: '면세 되나요?',             native: '免税できますか？',        pronunciation: '멘제이 데키마스카',        category: 'shopping' },
       { id: 's6', korean: '봉투 주세요',              native: '袋をください',            pronunciation: '후쿠로오 쿠다사이',        category: 'shopping' },
+      { id: 's7', korean: '카드로 결제할 수 있나요?', native: 'カードで支払えますか？',   pronunciation: '카도데 시하라에마스카',     category: 'shopping' },
     ],
   },
   {
