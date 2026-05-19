@@ -1,88 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const VOICE_MAP: Record<string, string> = {
-  ja: 'Kore',
-  en: 'Achird',
-  zh: 'Iapetus',
-};
-
-function buildWav(pcm: Buffer): Buffer {
-  const channels = 1;
-  const sampleRate = 24000;
-  const bitsPerSample = 16;
-  const byteRate = (sampleRate * channels * bitsPerSample) / 8;
-  const blockAlign = (channels * bitsPerSample) / 8;
-  const dataSize = pcm.length;
-
-  const header = Buffer.alloc(44);
-  let o = 0;
-  header.write('RIFF', o);                        o += 4;
-  header.writeUInt32LE(36 + dataSize, o);         o += 4;
-  header.write('WAVE', o);                        o += 4;
-  header.write('fmt ', o);                        o += 4;
-  header.writeUInt32LE(16, o);                    o += 4;
-  header.writeUInt16LE(1, o);                     o += 2;
-  header.writeUInt16LE(channels, o);              o += 2;
-  header.writeUInt32LE(sampleRate, o);            o += 4;
-  header.writeUInt32LE(byteRate, o);              o += 4;
-  header.writeUInt16LE(blockAlign, o);            o += 2;
-  header.writeUInt16LE(bitsPerSample, o);         o += 2;
-  header.write('data', o);                        o += 4;
-  header.writeUInt32LE(dataSize, o);
-
-  return Buffer.concat([header, pcm]);
-}
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, langCode } = await req.json();
+    const { text } = await req.json();
 
     if (!text?.trim()) {
       return NextResponse.json({ error: '텍스트를 입력해주세요.' }, { status: 400 });
     }
 
-    const voiceName = VOICE_MAP[langCode] ?? 'Kore';
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    // 패스권 서버 재검증
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text }] }],
-          generationConfig: {
-            responseModalities: ['AUDIO'],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName },
-              },
-            },
-          },
-        }),
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: (list) =>
+            list.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
+        },
       },
     );
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      const detail = data?.error?.message ?? JSON.stringify(data);
-      console.error('[tts] Gemini error', detail);
-      return NextResponse.json({ error: detail }, { status: 500 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    const base64: string =
-      data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data ?? '';
+    const { data: passes } = await supabase
+      .from('passes')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .gt('expires_at', new Date().toISOString())
+      .limit(1);
 
-    if (!base64) {
-      return NextResponse.json({ error: '음성 생성 실패' }, { status: 500 });
+    if (!passes || passes.length === 0) {
+      return NextResponse.json({ error: '패스권이 필요합니다.' }, { status: 403 });
     }
 
-    const wav = buildWav(Buffer.from(base64, 'base64'));
-
-    return new NextResponse(wav, {
+    // OpenAI TTS 호출
+    const openaiRes = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
       headers: {
-        'Content-Type': 'audio/wav',
-        'Content-Length': String(wav.length),
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tts-1',
+        input: text.trim(),
+        voice: 'nova',
+        response_format: 'mp3',
+      }),
+    });
+
+    if (!openaiRes.ok) {
+      const err = await openaiRes.json().catch(() => ({}));
+      console.error('[tts] OpenAI error', err);
+      return NextResponse.json({ error: err?.error?.message ?? 'TTS 변환 실패' }, { status: 500 });
+    }
+
+    const audioBuffer = await openaiRes.arrayBuffer();
+    return new Response(audioBuffer, {
+      headers: {
+        'Content-Type': 'audio/mpeg',
+        'Cache-Control': 'no-store',
       },
     });
   } catch (err) {
