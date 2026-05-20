@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import type { Pass } from '@/hooks/usePass';
 import { PASS_NAMES } from '@/lib/paymentUtils';
+import { Badge } from '@/components/ui/badge-1';
 
 export const LANGUAGES = [
   { code: 'ja', label: 'Japanese', native: '일본어' },
@@ -107,15 +108,7 @@ export function WorkspaceNavbar({ selected, onSelect, hasActivePass, activePass 
             {/* Trigger */}
             <div className="flex items-center gap-2 cursor-pointer">
               {hasActivePass && (
-                <span
-                  className="text-[8px] font-bold tracking-widest px-1.5 py-[3px] rounded-full font-[family-name:var(--font-dm-mono)]"
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    color: 'white',
-                  }}
-                >
-                  PRO
-                </span>
+                <Badge variant="turbo" size="sm" capitalize={false}>PRO</Badge>
               )}
               {avatarUrl ? (
                 <img
@@ -188,15 +181,7 @@ export function WorkspaceNavbar({ selected, onSelect, hasActivePass, activePass 
                             {passRemaining}
                           </p>
                         </div>
-                        <span
-                          className="text-[8px] font-bold tracking-widest px-1.5 py-[3px] rounded-full font-[family-name:var(--font-dm-mono)] shrink-0"
-                          style={{
-                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                            color: 'white',
-                          }}
-                        >
-                          PRO
-                        </span>
+                        <Badge variant="turbo" size="sm" capitalize={false}>PRO</Badge>
                       </div>
                     </div>
                     <div className="mx-3 mb-1.5 h-px bg-black/5" />

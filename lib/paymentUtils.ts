@@ -25,31 +25,6 @@ export function parsePassTypeFromOrderId(orderId: string): PassType | null {
   return null;
 }
 
-export async function confirmTossPayment(
-  paymentKey: string,
-  orderId: string,
-  amount: number,
-): Promise<{ ok: boolean; error?: string }> {
-  const secret = process.env.TOSS_SECRET_KEY;
-  if (!secret) return { ok: false, error: 'TOSS_SECRET_KEY 미설정' };
-
-  const res = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${secret}:`).toString('base64')}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ paymentKey, orderId, amount }),
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    const alreadyDone = body?.code === 'ALREADY_PROCESSED_PAYMENT';
-    return alreadyDone ? { ok: true } : { ok: false, error: body?.message ?? '결제 승인 실패' };
-  }
-  return { ok: true };
-}
-
 export async function savePass(
   supabase: SupabaseClient,
   userId: string,

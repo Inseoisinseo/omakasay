@@ -10,6 +10,12 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Badge gradient tokens */
+  --color-turbo-start: #FF3358;
+  --color-turbo-end:   #FF4F00;
+  --color-trial-start: #7B3FE4;
+  --color-trial-end:   #3B8BEB;
 }
 
 @media (prefers-color-scheme: dark) {

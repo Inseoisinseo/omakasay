@@ -1,26 +1,36 @@
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import {
-  PASS_PRICES,
-  parsePassTypeFromOrderId,
-  confirmTossPayment,
-  savePass,
-} from '@/lib/paymentUtils';
+import { polar } from '@/lib/polar';
+import { savePass } from '@/lib/paymentUtils';
+import type { PassType } from '@/lib/passUtils';
+
+const VALID_PASS_TYPES = new Set<PassType>(['1day', '3day', '7day']);
 
 export default async function PaymentSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ paymentKey?: string; orderId?: string; amount?: string }>;
+  searchParams: Promise<{ checkout_id?: string; pass_type?: string }>;
 }) {
-  const { paymentKey, orderId, amount } = await searchParams;
+  const { checkout_id, pass_type } = await searchParams;
 
-  if (!paymentKey || !orderId || !amount) {
+  if (!checkout_id || !pass_type) {
     redirect('/workspace?payment=fail');
   }
 
-  const passType = parsePassTypeFromOrderId(orderId);
-  if (!passType || Number(amount) !== PASS_PRICES[passType]) {
+  const passType = pass_type as PassType;
+  if (!VALID_PASS_TYPES.has(passType)) {
+    redirect('/workspace?payment=fail');
+  }
+
+  let checkout;
+  try {
+    checkout = await polar.checkouts.get({ id: checkout_id });
+  } catch {
+    redirect('/workspace?payment=fail');
+  }
+
+  if (checkout.status !== 'succeeded') {
     redirect('/workspace?payment=fail');
   }
 
@@ -40,11 +50,8 @@ export default async function PaymentSuccessPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth');
 
-  const confirm = await confirmTossPayment(paymentKey, orderId, Number(amount));
-  if (!confirm.ok) redirect('/workspace?payment=fail');
-
   try {
-    await savePass(supabase, user.id, passType, orderId);
+    await savePass(supabase, user.id, passType, checkout_id);
   } catch {
     redirect('/workspace?payment=fail');
   }

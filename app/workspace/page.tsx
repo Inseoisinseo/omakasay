@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import { usePass } from '@/hooks/usePass';
 import { useCustomPhrases } from '@/hooks/useCustomPhrases';
 import { PaymentModal } from '@/components/PaymentModal';
+import { Badge } from '@/components/ui/badge-1';
 import { PASS_NAMES } from '@/lib/paymentUtils';
 import type { PassType } from '@/lib/passUtils';
 
@@ -670,19 +671,6 @@ export default function WorkspacePage() {
               />
 
               <div className="relative z-10">
-                <div className="flex justify-center gap-3 mb-4">
-                  {(['🎉', '✨', '🎌'] as const).map((emoji, i) => (
-                    <motion.span
-                      key={i}
-                      className="text-2xl"
-                      animate={{ y: [-5, 5, -5] }}
-                      transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.28, ease: 'easeInOut' }}
-                    >
-                      {emoji}
-                    </motion.span>
-                  ))}
-                </div>
-
                 <h2 className="text-[20px] font-bold text-gray-900 mb-1.5 font-[family-name:var(--font-noto-sans-kr)]">
                   패스권 활성화!
                 </h2>
@@ -691,15 +679,7 @@ export default function WorkspacePage() {
                 </p>
 
                 <div className="flex justify-center mb-5">
-                  <span
-                    className="inline-flex items-center text-[9px] font-bold tracking-widest px-3 py-1.5 rounded-full font-[family-name:var(--font-dm-mono)]"
-                    style={{
-                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                      color: 'white',
-                    }}
-                  >
-                    PREMIUM UNLOCKED
-                  </span>
+                  <Badge variant="turbo" size="sm" capitalize={false}>PREMIUM UNLOCKED</Badge>
                 </div>
 
                 <button

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import type { PassType } from '@/lib/passUtils';
-import { PASS_PRICES, PASS_NAMES, generateOrderId } from '@/lib/paymentUtils';
+import { PASS_NAMES } from '@/lib/paymentUtils';
 
 interface Plan {
   type: PassType;
@@ -51,23 +51,25 @@ export function PaymentModal({ open, onClose }: PaymentModalProps) {
   const [buying, setBuying] = useState<PassType | null>(null);
 
   const handleBuy = async (passType: PassType) => {
-    if (buying) return;
+    if (buying || !user) return;
     setBuying(passType);
     try {
-      const { loadTossPayments } = await import('@tosspayments/payment-sdk');
-      const toss = await loadTossPayments(process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!);
-      const orderId = generateOrderId(passType);
-      await toss.requestPayment('카드', {
-        amount: PASS_PRICES[passType],
-        orderId,
-        orderName: PASS_NAMES[passType],
-        customerName: user?.user_metadata?.full_name ?? '고객',
-        successUrl: `${window.location.origin}/payment/success`,
-        failUrl: `${window.location.origin}/payment/fail`,
+      const res = await fetch('/api/payment/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passType }),
       });
-      // requestPayment가 리다이렉트하므로 아래는 실행되지 않음
+
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error ?? '결제 세션 생성 실패');
+      }
+
+      const { checkoutUrl } = await res.json();
+      window.location.href = checkoutUrl;
     } catch (err) {
       console.error('[PaymentModal] 결제 오류:', err);
+      alert('결제를 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.');
       setBuying(null);
     }
   };

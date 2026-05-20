@@ -4,15 +4,14 @@ import { cookies } from 'next/headers';
 import {
   PASS_PRICES,
   parsePassTypeFromOrderId,
-  confirmTossPayment,
   savePass,
 } from '@/lib/paymentUtils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { paymentKey, orderId, amount } = await req.json();
+    const { orderId, amount } = await req.json();
 
-    if (!paymentKey || !orderId || !amount) {
+    if (!orderId || !amount) {
       return NextResponse.json({ error: '필수 파라미터 누락' }, { status: 400 });
     }
 
@@ -41,11 +40,6 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: '인증이 필요합니다' }, { status: 401 });
-    }
-
-    const confirm = await confirmTossPayment(paymentKey, orderId, Number(amount));
-    if (!confirm.ok) {
-      return NextResponse.json({ error: confirm.error }, { status: 400 });
     }
 
     await savePass(supabase, user.id, passType, orderId);
