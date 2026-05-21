@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks';
 import { savePass } from '@/lib/paymentUtils';
 import { PASS_TYPE_BY_PRODUCT_ID } from '@/lib/polar';
-import type { PassType } from '@/lib/passUtils';
 
 function getAdminClient() {
   return createClient(
@@ -12,25 +12,42 @@ function getAdminClient() {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const event = await req.json();
-    const { type, data } = event as { type: string; data: Record<string, unknown> };
-
-    if (type === 'order.paid') {
-      const userId = (data.external_customer_id ?? (data.metadata as Record<string, unknown>)?.user_id) as string | undefined;
-      const productId = (data.items as Array<{ product_id: string }>)?.[0]?.product_id;
-      const passType = productId ? PASS_TYPE_BY_PRODUCT_ID[productId] : undefined;
-      const orderId = data.id as string | undefined;
-
-      if (userId && passType && orderId) {
-        const supabase = getAdminClient();
-        await savePass(supabase, userId, passType as PassType, orderId);
-      }
-    }
-
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('[payment/webhook]', err);
-    return NextResponse.json({ error: 'Webhook 처리 실패' }, { status: 500 });
+  const secret = process.env.POLAR_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error('[webhook] POLAR_WEBHOOK_SECRET 환경변수 누락');
+    return NextResponse.json({ error: '서버 설정 오류' }, { status: 500 });
   }
+
+  const rawBody = await req.text();
+
+  const headers: Record<string, string> = {};
+  req.headers.forEach((value, key) => { headers[key] = value; });
+
+  let event;
+  try {
+    event = validateEvent(rawBody, headers, secret);
+  } catch (err) {
+    if (err instanceof WebhookVerificationError) {
+      console.warn('[webhook] 서명 검증 실패');
+      return NextResponse.json({ error: '서명 검증 실패' }, { status: 403 });
+    }
+    throw err;
+  }
+
+  if (event.type === 'order.paid') {
+    const order = event.data;
+    const userId = order.customer?.externalId ?? undefined;
+    const productId = (order.productId ?? undefined) as string | undefined;
+    const passType = productId ? PASS_TYPE_BY_PRODUCT_ID[productId] : undefined;
+
+    if (userId && passType) {
+      const supabase = getAdminClient();
+      await savePass(supabase, userId, passType, order.id);
+      console.log(`[webhook] pass 저장 완료: userId=${userId}, type=${passType}`);
+    } else {
+      console.warn('[webhook] order.paid — userId 또는 passType 누락', { userId, productId });
+    }
+  }
+
+  return NextResponse.json({ ok: true });
 }
