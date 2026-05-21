@@ -44,7 +44,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ checkoutUrl: checkout.url });
   } catch (err) {
-    console.error('[payment/checkout]', err);
-    return NextResponse.json({ error: '결제 세션 생성에 실패했습니다' }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[payment/checkout] POLAR_SERVER:', process.env.POLAR_SERVER);
+    console.error('[payment/checkout] token set:', !!process.env.POLAR_API_TOKEN);
+    console.error('[payment/checkout] error:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

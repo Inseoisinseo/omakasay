@@ -52,15 +52,16 @@ export function PaymentModal({ open, onClose }: PaymentModalProps) {
       });
 
       if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? '결제 세션 생성 실패');
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `서버 오류 (${res.status})`);
       }
 
       const { checkoutUrl } = await res.json();
       window.location.href = checkoutUrl;
     } catch (err) {
-      console.error('[PaymentModal]', err);
-      alert('결제를 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.');
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[PaymentModal]', msg);
+      alert(`결제 오류: ${msg}`);
       setBuying(false);
     }
   };
