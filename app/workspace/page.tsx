@@ -83,6 +83,7 @@ export default function WorkspacePage() {
   const [ttsLoading, setTtsLoading] = useState(false);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [savedThisSession, setSavedThisSession] = useState(false);
+  const [showCustomPhrasePaymentPrompt, setShowCustomPhrasePaymentPrompt] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { phrases: customPhrases, save: savePhrase, remove: removePhrase } = useCustomPhrases(selectedLang?.code ?? null);
@@ -296,7 +297,7 @@ export default function WorkspacePage() {
 
       {/* Category pills */}
       {allCategories.length > 0 && (
-        <div className="px-8 pt-4 md:px-12">
+        <div className="px-4 pt-4 md:px-12">
           <div className="max-w-2xl mx-auto">
             <div className="grid grid-cols-4 gap-2">
               <button
@@ -333,7 +334,7 @@ export default function WorkspacePage() {
 
       {/* Phrase cards */}
       {categories.length > 0 && (
-        <section className="px-8 pt-6 md:px-12 space-y-6">
+        <section className="px-4 pt-6 md:px-12 space-y-6">
           {categories.map((category) => (
             <div key={category.id} className="max-w-2xl mx-auto">
               <p className="text-xs text-gray-400 mb-2.5 font-[family-name:var(--font-dm-mono)]">
@@ -389,19 +390,45 @@ export default function WorkspacePage() {
 
       {/* 나만의 표현 블럭 */}
       {selectedLang && customPhrases.length > 0 && (
-        <section className="px-8 md:px-12 pt-6">
+        <section className="px-4 md:px-12 pt-6">
           <div className="max-w-2xl mx-auto">
-            <p className="text-xs text-gray-400 mb-2.5 font-[family-name:var(--font-dm-mono)]">
+            <p className={cn(
+              "text-xs mb-2.5 font-[family-name:var(--font-dm-mono)]",
+              hasActivePass ? "text-gray-400" : "text-gray-300"
+            )}>
               📌 나만의 표현
             </p>
             <div className="grid grid-cols-2 gap-3">
               {customPhrases.map((phrase, i) => {
-                const color = BLOCK_COLORS[i % BLOCK_COLORS.length];
+                const isLocked = !passLoading && !hasActivePass;
+                const color = isLocked
+                  ? { bg: 'rgba(0,0,0,0.03)', border: 'rgba(0,0,0,0.08)' }
+                  : BLOCK_COLORS[i % BLOCK_COLORS.length];
                 const isActive = activeBlockId === phrase.id;
                 const koreanSize =
                   phrase.korean.length <= 10 ? 'text-[15px]'
                   : phrase.korean.length <= 12 ? 'text-[13px]'
                   : 'text-[11px]';
+
+                if (isLocked) {
+                  return (
+                    <button
+                      key={phrase.id}
+                      onClick={() => setShowCustomPhrasePaymentPrompt(true)}
+                      className="flex flex-col gap-1 px-4 py-3.5 rounded-xl text-left cursor-pointer"
+                      style={{ background: color.bg, border: `1px solid ${color.border}` }}
+                    >
+                      <span className={`${koreanSize} font-medium text-gray-300 font-[family-name:var(--font-noto-sans-kr)] leading-snug`}>
+                        {phrase.korean}
+                      </span>
+                      <span className="text-[11px] text-gray-300 font-[family-name:var(--font-dm-mono)] leading-snug break-all">
+                        {phrase.native}
+                      </span>
+                      <span className="h-[14px] mt-0.5" />
+                    </button>
+                  );
+                }
+
                 return (
                   <div
                     key={phrase.id}
@@ -453,7 +480,7 @@ export default function WorkspacePage() {
 
       {/* Input section */}
       {selectedLang && (
-        <section className="px-8 md:px-12 mt-8 pb-10">
+        <section className="px-4 md:px-12 mt-8 pb-10">
           <div className="max-w-2xl mx-auto">
 
             {/* Input box */}
@@ -627,6 +654,60 @@ export default function WorkspacePage() {
             style={{ backgroundColor: '#1a1a1a' }}
           >
             {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 나만의 표현 잠금 확인 팝업 */}
+      <AnimatePresence>
+        {showCustomPhrasePaymentPrompt && (
+          <motion.div
+            key="custom-phrase-payment-prompt"
+            className="fixed inset-0 z-[60] flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setShowCustomPhrasePaymentPrompt(false)}
+          >
+            <div
+              className="absolute inset-0"
+              style={{ backgroundColor: 'rgba(0,0,0,0.28)', backdropFilter: 'blur(4px)' }}
+            />
+            <motion.div
+              className="relative w-[calc(100%-3rem)] max-w-xs rounded-3xl p-7 text-center"
+              style={{
+                backgroundColor: '#fffcef',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.22), 0 4px 16px rgba(0,0,0,0.10)',
+              }}
+              initial={{ scale: 0.88, y: 16, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.92, y: -8, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-[15px] font-medium text-gray-900 mb-6 font-[family-name:var(--font-noto-sans-kr)] leading-snug">
+                패스권 결제시 이용가능합니다.<br />결제 하시겠습니까?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowCustomPhrasePaymentPrompt(false);
+                    setShowPaymentModal(true);
+                  }}
+                  className="flex-1 h-11 rounded-full text-[13px] font-medium text-white transition-all hover:opacity-85 active:scale-95 font-[family-name:var(--font-dm-mono)]"
+                  style={{ backgroundColor: '#1a1a1a' }}
+                >
+                  네
+                </button>
+                <button
+                  onClick={() => setShowCustomPhrasePaymentPrompt(false)}
+                  className="flex-1 h-11 rounded-full text-[13px] font-medium text-gray-600 border border-black/10 transition-all hover:bg-black/5 active:scale-95 font-[family-name:var(--font-dm-mono)]"
+                >
+                  닫기
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

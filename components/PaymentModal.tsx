@@ -1,45 +1,35 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import type { PassType } from '@/lib/passUtils';
-import { PASS_NAMES } from '@/lib/paymentUtils';
 
-interface Plan {
-  type: PassType;
-  price: string;
-  description: string;
-  recommended?: boolean;
-  bg: string;
-  border: string;
-}
-
-const PLANS: Plan[] = [
+const PLANS = [
   {
-    type: '1day',
-    price: '990원',
+    type: '1day' as PassType,
+    label: ' 1일 패스',
+    price: '990',
     description: '당일치기 여행',
-    bg: 'rgba(99,102,241,0.07)',
-    border: 'rgba(99,102,241,0.22)',
   },
   {
-    type: '3day',
-    price: '1,900원',
+    type: '3day' as PassType,
+    label: ' 3일 패스',
+    price: '1,900',
     description: '2박 3일 여행',
     recommended: true,
-    bg: 'rgba(234,179,8,0.10)',
-    border: 'rgba(234,179,8,0.38)',
   },
   {
-    type: '7day',
-    price: '2,900원',
+    type: '7day' as PassType,
+    label: ' 7일 패스',
+    price: '2,900',
     description: '일주일 여행',
-    bg: 'rgba(20,184,166,0.07)',
-    border: 'rgba(20,184,166,0.22)',
   },
 ];
+
+const CARD_H = 88;
+const CARD_GAP = 12;
 
 interface PaymentModalProps {
   open: boolean;
@@ -48,16 +38,17 @@ interface PaymentModalProps {
 
 export function PaymentModal({ open, onClose }: PaymentModalProps) {
   const { user } = useAuth();
-  const [buying, setBuying] = useState<PassType | null>(null);
+  const [selected, setSelected] = useState(1);
+  const [buying, setBuying] = useState(false);
 
-  const handleBuy = async (passType: PassType) => {
+  const handleBuy = async () => {
     if (buying || !user) return;
-    setBuying(passType);
+    setBuying(true);
     try {
       const res = await fetch('/api/payment/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passType }),
+        body: JSON.stringify({ passType: PLANS[selected].type }),
       });
 
       if (!res.ok) {
@@ -68,9 +59,9 @@ export function PaymentModal({ open, onClose }: PaymentModalProps) {
       const { checkoutUrl } = await res.json();
       window.location.href = checkoutUrl;
     } catch (err) {
-      console.error('[PaymentModal] 결제 오류:', err);
+      console.error('[PaymentModal]', err);
       alert('결제를 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.');
-      setBuying(null);
+      setBuying(false);
     }
   };
 
@@ -78,7 +69,6 @@ export function PaymentModal({ open, onClose }: PaymentModalProps) {
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -89,95 +79,98 @@ export function PaymentModal({ open, onClose }: PaymentModalProps) {
             onClick={onClose}
           />
 
-          {/* Modal */}
           <motion.div
             key="modal"
             initial={{ opacity: 0, y: 32, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed bottom-6 z-50 w-[calc(100%-2rem)] max-w-md rounded-3xl p-6 overflow-hidden"
-            style={{
-              left: '50%',
-              transform: 'translateX(-50%)',
-              backgroundColor: '#fffcef',
-              boxShadow: '0 12px 48px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)',
-            }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            {/* Soft yellow glow */}
-            <div
-              className="absolute inset-0 z-0 pointer-events-none"
-              style={{
-                backgroundImage: 'radial-gradient(circle at 50% 60%, #FFF991 0%, transparent 68%)',
-                opacity: 0.55,
-                mixBlendMode: 'multiply',
-              }}
-            />
-            {/* Header */}
-            <div className="relative z-10 flex items-start justify-between mb-5">
-              <h2 className="text-[15px] font-semibold text-gray-900 leading-snug pr-4 font-[family-name:var(--font-noto-sans-kr)]">
-                🎌 AI 번역을 사용하려면
-                <br />
-                여행 패스가 필요해요
-              </h2>
-              <button
-                onClick={onClose}
-                disabled={!!buying}
-                className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-black/8 hover:text-gray-700 transition-all duration-150 disabled:opacity-40"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+            <div className="border-2 rounded-[32px] p-3 shadow-md w-full max-w-sm flex flex-col items-center gap-3 bg-white pointer-events-auto">
 
-            {/* Plan cards */}
-            <div className="relative z-10 flex flex-col gap-2.5 mb-5">
-              {PLANS.map((plan) => {
-                const isBuying = buying === plan.type;
-                return (
+              {/* Header */}
+              <div className="w-full flex items-center justify-between px-2 pt-1">
+                <p className="text-[17px] font-semibold text-gray-800 font-[family-name:var(--font-noto-sans-kr)] w-full text-center">
+                  여행 패스 선택
+                </p>
+                <button
+                  onClick={onClose}
+                  disabled={buying}
+                  className="h-7 w-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-black/[0.06] hover:text-gray-700 transition-colors disabled:opacity-40"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Plan cards */}
+              <div className="w-full relative flex flex-col gap-3">
+                {PLANS.map((plan, index) => (
                   <div
                     key={plan.type}
-                    className="relative flex items-center justify-between rounded-2xl px-4 py-3.5"
-                    style={{ background: plan.bg, border: `1px solid ${plan.border}` }}
+                    className="w-full flex items-center justify-between cursor-pointer border-2 border-gray-200 px-4 rounded-2xl"
+                    style={{ height: `${CARD_H}px` }}
+                    onClick={() => setSelected(index)}
                   >
-                    {plan.recommended && (
-                      <span
-                        className="absolute -top-2.5 left-4 text-[10px] font-semibold rounded-full px-2 py-0.5 font-[family-name:var(--font-dm-mono)]"
-                        style={{ background: 'rgba(234,179,8,0.9)', color: '#713f12' }}
-                      >
-                        추천
-                      </span>
-                    )}
-                    <div>
-                      <p className="text-[13px] font-semibold text-gray-900 font-[family-name:var(--font-noto-sans-kr)]">
-                        {PASS_NAMES[plan.type]}
+                    <div className="flex flex-col">
+                      <p className="font-semibold text-[15px] text-gray-950 flex items-center gap-2 font-[family-name:var(--font-noto-sans-kr)]">
+                        {plan.label}
+                        {plan.recommended && (
+                          <span className="py-0.5 px-2 rounded-lg bg-yellow-100 text-yellow-900 text-xs font-medium">
+                            추천
+                          </span>
+                        )}
                       </p>
-                      <p className="text-[11px] text-gray-500 mt-0.5 font-[family-name:var(--font-dm-mono)]">
+                      <p className="text-gray-400 text-[13px] mt-0.5 font-[family-name:var(--font-noto-sans-kr)]">
                         {plan.description}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-[13px] font-bold text-gray-800 font-[family-name:var(--font-dm-mono)]">
-                        {plan.price}
+
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-800 font-semibold text-[13px] font-[family-name:var(--font-noto-sans-kr)]">
+                        ₩{plan.price}
                       </span>
-                      <button
-                        onClick={() => handleBuy(plan.type)}
-                        disabled={!!buying}
-                        className="h-8 px-3.5 rounded-full text-[12px] font-medium text-white transition-all duration-150 hover:opacity-85 active:scale-95 disabled:opacity-50 flex items-center gap-1.5 font-[family-name:var(--font-dm-mono)]"
-                        style={{ backgroundColor: '#1a1a1a' }}
+                      <div
+                        className="border-2 size-6 rounded-full p-1 flex items-center justify-center shrink-0"
+                        style={{
+                          borderColor: selected === index ? '#000' : '#94a3b8',
+                          transition: 'border-color 0.3s',
+                        }}
                       >
-                        {isBuying && <Loader2 className="h-3 w-3 animate-spin" />}
-                        구매하기
-                      </button>
+                        <div
+                          className="size-3 bg-black rounded-full"
+                          style={{
+                            opacity: selected === index ? 1 : 0,
+                            transition: 'opacity 0.3s',
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
 
-            {/* Footer */}
-            <p className="relative z-10 text-center text-[11px] text-gray-400 font-[family-name:var(--font-dm-mono)]">
-              패스권 구매 시 자연스러운 목소리로 업그레이드!
-            </p>
+                {/* Moving highlight border */}
+                <div
+                  className="absolute top-0 left-0 w-full rounded-2xl border-[3px] border-black pointer-events-none"
+                  style={{
+                    height: `${CARD_H}px`,
+                    transform: `translateY(${selected * (CARD_H + CARD_GAP)}px)`,
+                    transition: 'transform 0.3s',
+                  }}
+                />
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={handleBuy}
+                disabled={buying}
+                className="rounded-full bg-black text-[15px] text-white w-full py-3 flex items-center justify-center gap-2 active:scale-95 transition-transform duration-300 disabled:opacity-50 font-[family-name:var(--font-noto-sans-kr)]"
+              >
+                {buying && <Loader2 className="h-4 w-4 animate-spin" />}
+                구매하기
+              </button>
+
+            </div>
           </motion.div>
         </>
       )}

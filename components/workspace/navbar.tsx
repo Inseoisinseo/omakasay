@@ -75,7 +75,7 @@ export function WorkspaceNavbar({ selected, onSelect, hasActivePass, activePass 
 
   return (
     <>
-      <nav className="flex items-center justify-between px-6 py-3 relative">
+      <nav className="flex items-center justify-between px-4 py-4 md:px-6 md:py-5 relative">
         {/* Logo */}
         <Link href="/" className="text-xl font-bold tracking-wider text-gray-900 font-[family-name:var(--font-pacifico)] shrink-0 z-10">
           omakasay
@@ -202,7 +202,7 @@ export function WorkspaceNavbar({ selected, onSelect, hasActivePass, activePass 
         )}
 
         {/* Desktop: search dropdown (md 이상에서만 표시) */}
-        <div className="hidden md:block absolute left-1/2 -translate-x-1/2 z-50" ref={ref}>
+        <div className="hidden md:flex flex-col items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50" ref={ref}>
           <div
             className="flex items-center gap-2 px-4 py-2 rounded-2xl cursor-pointer"
             style={glassStyle}
@@ -213,6 +213,12 @@ export function WorkspaceNavbar({ selected, onSelect, hasActivePass, activePass 
               {selected ? `${selected.native} · ${selected.label}` : 'Select language...'}
             </span>
           </div>
+
+          {!open && !selected && (
+            <p className="mt-1.5 text-center text-[11px] text-gray-400 font-[family-name:var(--font-dm-mono)]">
+              언어를 선택하고 시작하세요
+            </p>
+          )}
 
           {open && (
             <div
@@ -235,7 +241,7 @@ export function WorkspaceNavbar({ selected, onSelect, hasActivePass, activePass 
       </nav>
 
       {/* Mobile: 언어 버튼 펼침 (md 미만에서만 표시) */}
-      <div className="md:hidden px-6 pb-2">
+      <div className="md:hidden px-4 pb-2">
         <p className="text-[11px] text-gray-400 mb-2.5 font-[family-name:var(--font-dm-mono)]">
           언어 선택
         </p>
