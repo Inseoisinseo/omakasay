@@ -3,7 +3,7 @@ import type { PassType } from '@/lib/passUtils';
 
 export const polar = new Polar({
   accessToken: process.env.POLAR_API_TOKEN!,
-  server: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
+  server: (process.env.POLAR_SERVER as 'sandbox' | 'production') ?? 'sandbox',
 });
 
 export const POLAR_PRODUCT_IDS: Record<PassType, string> = {
