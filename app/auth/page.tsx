@@ -1,11 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 
 export default function AuthPage() {
     const { signInWithKakao } = useAuth()
     const [loading, setLoading] = useState(false)
+    const [isInAppBrowser, setIsInAppBrowser] = useState(false)
+
+    useEffect(() => {
+        const ua = navigator.userAgent
+        const inApp = /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|Twitter/i.test(ua)
+        setIsInAppBrowser(inApp)
+    }, [])
 
     const handleKakaoLogin = async () => {
         setLoading(true)
@@ -13,11 +20,40 @@ export default function AuthPage() {
         setLoading(false)
     }
 
+    const openInExternalBrowser = () => {
+        const url = window.location.href
+        // iOS KakaoTalk: kakaotalk://web/openExternal
+        if (/KAKAOTALK/i.test(navigator.userAgent)) {
+            window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(url)}`
+        } else {
+            window.open(url, '_blank')
+        }
+    }
+
     return (
         <main
             className="min-h-screen w-full flex flex-col items-center justify-center px-6"
             style={{ backgroundColor: '#fffcef' }}
         >
+            {/* 인앱브라우저 감지 배너 */}
+            {isInAppBrowser && (
+                <div
+                    className="fixed top-0 left-0 right-0 z-50 px-4 py-3 text-center text-[13px] leading-snug"
+                    style={{
+                        backgroundColor: '#1a1a1a',
+                        color: '#fff',
+                        fontFamily: 'var(--font-noto-sans-kr)',
+                    }}
+                >
+                    카카오톡 내부 브라우저에서는 로그인이 제한됩니다.
+                    <button
+                        onClick={openInExternalBrowser}
+                        className="ml-2 underline underline-offset-2 font-medium"
+                    >
+                        Safari로 열기
+                    </button>
+                </div>
+            )}
             {/* Card */}
             <div
                 className="w-full max-w-xs rounded-3xl px-7 py-9 flex flex-col items-center gap-5"
